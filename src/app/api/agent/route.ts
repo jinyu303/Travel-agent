@@ -310,7 +310,11 @@ export async function POST(request: Request) {
           "用户只提供入住或退房其中一个日期时，应询问另一个日期。" +
           "PDF明确提供日期时，搜索必须使用PDF中的入住和退房日期。" +
           "上传PDF的本次请求只允许查询和推荐。"+
-          "回答使用纯文本，不使用Markdown星号或标题符号。",
+          "回答使用纯文本，不使用Markdown星号或标题符号。"+
+          "最终回答必须说明房源、评分及评论数均为演示数据。" +
+            "未传入住和退房日期时，最终回答必须包含：未提供日期，尚未核验日期可用性。" +
+            "评分和评论数只比较数值，不使用口碑更好、质量更好、体验更稳定等推断。" +
+            "用户仅要求搜索、推荐或比较时，不查询心愿单。",
       },
       ...history,
       { role: "user", content: currentQuestion },
@@ -318,7 +322,23 @@ export async function POST(request: Request) {
 
     // 最多六次模型请求、八次业务工具执行
     for (let round = 0; round < 6; round++) {
-      const message = await requestModel(messages, availableTools);
+      const isFinalRound = round === 5;
+
+            if (isFinalRound) {
+            messages.push({
+                role: "system",
+                content:
+                "已到本次请求的最后一轮，不再调用工具。" +
+                "请依据已有工具结果回答用户。" +
+                "没有完成的任务明确说明未完成，不能声称操作成功。" +
+                "工具失败或资料不足时，简短说明原因。",
+            });
+            }
+
+            const message = await requestModel(
+            messages,
+            isFinalRound ? undefined : availableTools
+            );
       const calls = message.tool_calls;
 
       if (
