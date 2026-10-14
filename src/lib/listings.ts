@@ -1,25 +1,87 @@
 import { DatabaseSync } from "node:sqlite";
 
+
 // 返回符合地点条件的房源
-export function searchListings(location?: string | null) {
+export type ListingFilters = {
+  maxPrice?: number;
+  guests?: number;
+  propertyType?: string;
+};
+
+export function searchListings(
+  location?: string | null,
+  filters: ListingFilters = {}
+) {
+  if (
+    filters.maxPrice !== undefined &&
+    (!Number.isSafeInteger(filters.maxPrice) || filters.maxPrice < 0)
+  ) {
+    throw new Error("每晚预算必须是非负整数");
+  }
+
+  if (
+    filters.guests !== undefined &&
+    (!Number.isSafeInteger(filters.guests) || filters.guests < 1)
+  ) {
+    throw new Error("人数必须是正整数");
+  }
+
+  if (
+    filters.propertyType !== undefined &&
+    !["公寓", "民宿", "别墅"].includes(filters.propertyType)
+  ) {
+    throw new Error("房源类型不合法");
+  }
+
   const db = new DatabaseSync("data/travel.db");
 
   try {
-    // 1. 基础 SQL：查询所有房源
-    let sql = "SELECT * FROM listings";
-    // 2. 参数数组：存放占位符对应的值
-    const params: string[] = [];
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
 
-    // 3. 如果 location 有值，追加 WHERE 条件
-    if (location) {
-      sql += " WHERE location = ?";
-      params.push(location);
+    if (location?.trim()) {
+      conditions.push("location = ?");
+      params.push(location.trim());
     }
 
-    // 4. 执行查询，返回所有匹配的行
-    const rows = db.prepare(sql).all(...params);
-    return rows;
-    
+    if (filters.maxPrice !== undefined) {
+      conditions.push("price_per_night <= ?");
+      params.push(filters.maxPrice);
+    }
+
+    if (filters.guests !== undefined) {
+      conditions.push("max_guests >= ?");
+      params.push(filters.guests);
+    }
+
+    if (filters.propertyType !== undefined) {
+      conditions.push("property_type = ?");
+      params.push(filters.propertyType);
+    }
+
+    let sql = "SELECT * FROM listings";
+
+    if (conditions.length > 0) {
+      sql += " WHERE " + conditions.join(" AND ");
+    }
+
+    sql += " ORDER BY price_per_night ASC, id ASC";
+
+    return db.prepare(sql).all(...params);
+  } finally {
+    db.close();
+  }
+}
+
+
+{/*id 查询 */}
+export function getListingById(id: number){
+  const db = new DatabaseSync("data/travel.db");
+
+  try {
+    return db
+      .prepare("SELECT * FROM listings WHERE id = ?")
+      .get(id);
   } finally {
     db.close();
   }

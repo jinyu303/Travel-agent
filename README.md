@@ -1,36 +1,191 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wanderly · AI Travel Agent
 
-## Getting Started
+一个参考 Airbnb 住宿流程的旅游住宿考核项目，结合真实数据库查询与 AI Tool Calling，支持搜索、收藏、预订和旅行需求推荐。房源、图片、评分及评论数量均为演示资料，不提供真实住宿或付款服务。
 
-First, run the development server:
+## 主要功能
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- 首页搜索、房源分类和精选住宿。首页精选按每晚价格排序，属于固定展示规则。
+- 搜索按目的地、日期、人数、价格范围和房源类型筛选，条件保存在 URL 中。
+- 房源详情展示图片、介绍、设施、入住人数上限、房东信息和住宿总价。
+- 用户注册、登录、登出与会话验证。
+- 创建、查看、删除心愿单，添加和移除房源。
+- 确认预订、查看行程和取消订单。取消保留订单历史，并释放该订单占用的日期。
+- AI 通过自然语言理解需求，调用真实房源搜索工具，再依据查询结果推荐和比较。
+- AI 查询当前用户心愿单，并通过工具执行添加收藏。
+- PDF 请求接入文本提取，将提取的旅行资料交给模型分析并调用房源搜索工具。
+
+## 技术栈与运行环境
+
+| 项目 | 技术 / 已验证版本 |
+| --- | --- |
+| 运行时 | Node.js 24.18.0 |
+| 包管理 | npm 11.16.0 |
+| Web 框架 | Next.js 16.3.6，App Router |
+| UI | React 19.2.8，Tailwind CSS 4 |
+| 语言 | TypeScript |
+| 后端 | Next.js Route Handlers |
+| 数据库 | SQLite，使用 Node.js 自带的 `node:sqlite` |
+| PDF | pdf-parse 2.4.5 |
+| AI | Agnes，模型 `agnes-2.5-flash` |
+
+运行环境应提供 `node:sqlite`；可以使用上表已验证的 Node.js 版本复现。
+
+## 本地运行
+
+以下命令均在项目根目录执行。
+
+### 1. 安装依赖
+
+```bat
+npm ci
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. 配置 AI 密钥
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Windows CMD：
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bat
+copy .env.example .env.local
+```
 
-## Learn More
+在 `.env.local` 中填写自己的 Agnes 密钥：
 
-To learn more about Next.js, take a look at the following resources:
+```dotenv
+AGNES_API_KEY=填写自己的密钥
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`.env.example` 仅保存变量名称，不包含真实密钥。修改 `.env.local` 后需重启运行中的开发服务。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+AI 请求由服务器发送到 `https://api.agnes-ai.cn/v1/chat/completions`，使用 Bearer 认证；密钥不应放入客户端代码或提交到 Git。
 
-## Deploy on Vercel
+### 3. 初始化数据库
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bat
+npm run db:init
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+初始化顺序：
+
+| 顺序 | 脚本 | 用途 |
+| --- | --- | --- |
+| 1 | `scripts/check-db.mjs` | 创建数据目录与六张业务表，添加基础房源和人数上限 |
+| 2 | `scripts/migrate-listings.mjs` | 添加房源类型、介绍、图片、设施等字段 |
+| 3 | `scripts/migrate-bookings.mjs` | 添加订单状态字段 |
+| 4 | `scripts/seed-listings.mjs` | 导入演示房源，合计 60 条 |
+| 5 | `scripts/seed-listing-images.mjs` | 为尚无图片的房源设置本地图片 |
+
+数据库位于 `data/travel.db`，路径相对于当前工作目录。首次初始化不会创建登录用户或预订订单，请在页面注册自己的测试账户。
+
+初始化支持重复执行：已有表和字段跳过创建，相同房源编号跳过插入，已有图片不被覆盖。脚本会为指定旧房源补充空介绍，不会清空用户或订单。
+
+图片脚本依赖 `public/images/stay-1.jpg`、`stay-2.jpg` 和 `stay-3.jpg`，这些文件必须随源码提交。
+
+### 4. 启动开发服务
+
+```bat
+npm run dev
+```
+
+访问终端显示的本地地址，通常为 `http://localhost:3000`。
+
+### 5. 构建与生产模式运行
+
+```bat
+npm run build
+npm run start
+```
+
+生产模式同样需要完成数据库初始化与环境变量配置。数据库依赖本地文件，应运行在能够保留并读写该文件的 Node.js 环境中。
+
+## 项目结构
+
+| 路径 | 职责 |
+| --- | --- |
+| `src/app/` | 首页、搜索、房源详情、用户、心愿单和行程页面 |
+| `src/app/api/` | 身份认证、房源、心愿单、订单和 Agent 接口 |
+| `src/components/` | 公共导航、房源卡片、API 表单及交互组件 |
+| `src/lib/` | 数据库业务函数、会话、密码、日期、房源可用性和工具执行 |
+| `scripts/` | 建表、迁移、演示数据导入及验证脚本 |
+| `public/images/` | 本地房源演示图片 |
+| `data/` | 本机数据库与演示 PDF；数据库不提交 |
+| `DEVLOG.md` | 开发记录 |
+
+## Agent 架构
+
+用户消息和可选 PDF 通过 FormData 提交到 `/api/agent`。服务端验证会话，从会话取得当前用户编号，再向模型发送对话与工具定义。
+
+模型返回 `tool_calls` 时，服务端解析参数，调用 `executeAgentTool`，由业务函数查询或修改 SQLite。工具结果加入对话后再次请求模型，最终返回回复和 `trace`。
+
+| 实际工具名 | 业务能力 |
+| --- | --- |
+| `search_listings` | 按地点、每晚最高预算、人数、类型和可选日期查询房源 |
+| `list_wishlists` | 查询当前登录用户的心愿单名称和编号 |
+| `add_wishlist_item` | 调用收藏业务函数，将房源加入当前用户拥有的心愿单 |
+
+推荐和比较由模型依据搜索结果完成，未单独实现 `recommendListings` 或 `compareListings` 工具。创建、移除和删除心愿单通过网站页面完成；当前 Agent 没有这些工具，也不能直接创建或取消预订。
+
+工具执行的 `userId` 来自服务端验证后的会话，不由模型参数决定。工具执行器校验预算、人数、日期和编号，并返回实际业务结果。
+
+Agent 每个请求最多发起六次模型请求、执行八次业务工具调用。模型请求单次超时为 60 秒，采用非流式响应。接口支持接收最多十条用户 / 助手历史消息，不接收客户端伪造的工具消息。
+
+### PDF 流程
+
+服务端接收字段 `pdf`，限制附件最大 5 MB，调用 `extractTravelPdf` 提取文本，再将文本作为旅行需求资料交给模型。
+
+PDF 请求只提供搜索和查询心愿单工具；即使模型返回其他工具调用，服务端也拒绝执行。因此附件文本不能授权收藏等写操作。需要收藏时，在后续不带附件的消息中明确提出请求。
+
+这说明代码已接入 PDF 到搜索推荐的处理流程；实际上传、文本提取、工具调用和页面展示仍应通过完整 Demo 验证。建议使用可选中文字的演示 PDF；扫描件和复杂版式的解析效果需另行测试。
+
+## 业务规则与限制
+
+- 按 Asia/Shanghai 判断业务日期，入住日期不能早于今天。
+- 退房日期须晚于入住日期，单次最多入住 30 晚；服务端使用公共日期函数校验。
+- 日期区间采用入住包含、退房不包含的规则。冲突条件为 `check_in < 新退房日期 AND check_out > 新入住日期`。
+- 仅 `confirmed` 订单占用日期；`cancelled` 订单仍显示在用户行程历史中。
+- 创建订单在数据库事务内重新检查冲突，搜索时可用不代表提交时一定可订。
+- 总价由服务端使用房源每晚价格和晚数计算，不接入真实支付。
+- 未提供日期的 AI 搜索不能用于确认库存；站内缺少地铁距离等资料时，不应据此承诺交通便利。
+- AI 仅在明确的收藏请求下执行收藏。这一意图规则由提示词指导；身份与业务权限仍需由服务端校验。
+- 多轮对话依赖客户端提交历史文字，不等同于持久化的长期记忆。
+
+## 验证记录
+
+2026-10-14 已完成以下验证：
+
+- 在独立目录从空数据库初始化，创建六张业务表、导入 60 条房源并设置图片。
+- 在已有数据库重复初始化，没有重复字段和房源编号错误。
+- `npm run build` 通过。
+- 用户报告注册、登录、登出、心愿单及预订页面流程符合预期。
+- 取消订单后保留历史，释放该笔订单占用日期；重复取消返回 `200` 和 `cancelled:false`。
+- 尝试取消他人的订单返回 `403`。
+- - 普通 AI 搜索的地点、人数、预算和类型参数正确，依据真实结果比较房源3和21。
+- PDF 上传成功，提取112个字符，并使用附件中的日期、人数、预算和类型搜索；未执行收藏。
+
+构建成功不代表所有运行时业务已通过验收。Agent 推荐、实际收藏及 PDF 自动推荐应通过以下演示检查真实工具参数、结果和数据库状态。
+
+## 建议 Demo（3～5 分钟）
+
+1. 首页按地点、日期和人数搜索，打开房源详情查看设施与价格。
+2. 注册或登录测试账户，创建“东京旅行”心愿单并收藏房源。
+3. 确认预订，在“我的行程”查看订单，再取消并展示状态变化。
+4. 向 Agent 输入：“东京公寓，2 人，每晚不超过 700 元，比较最便宜的两套。”查看 `trace` 中真实搜索参数和结果；仅推荐时不应执行收藏。
+5. 输入：“把刚才推荐的第一个房源加入东京旅行心愿单。”检查工具返回和网站心愿单里的实际记录。
+6. 上传 `data/sample-trip.pdf`，要求根据旅行计划推荐住宿，检查提取结果与搜索参数。日期已过期或条件含糊时，应修改演示资料或澄清需求。
+
+## 开发中遇到的问题与处理
+
+| 问题 | 处理方式 |
+| --- | --- |
+| 原生 POST 表单提交后跳到 JSON 页面 | 使用可复用的 `ApiForm`，等待响应、展示错误并在成功后导航 |
+| 导航文字不清晰，登录状态不明显 | 显式设置背景与文字颜色，服务端读取会话显示对应导航 |
+| 订单无法取消 | 增加状态字段、归属校验与取消接口，保留取消历史 |
+| 取消后日期仍被占用 | 搜索和创建订单的冲突查询均只计算已确认订单 |
+| 可以提交跨越上千年的住宿日期 | 在公共日期函数中添加最多 30 晚限制 |
+| 下载仓库后没有本机数据库 | 整合 `db:init` 并在独立目录验证首次初始化 |
+| 私有文件可能进入提交 | 忽略 `.env.local`、Cookie 文件和数据库，同时检查已有 Git 跟踪 |
+
+## 提交内容
+
+提交源码、初始化脚本、`public/images`、`package.json`、`package-lock.json`、配置文件、`.env.example`、README 和开发记录。演示 PDF 需确认不含个人信息。
+
+不提交真实 API 密钥、Cookie、本机用户数据库、`node_modules`、构建产物和 `.init-check` 测试目录。

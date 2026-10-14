@@ -6,16 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:init": "node scripts/check-db.mjs && node scripts/migrate-listings.mjs && node scripts/migrate-bookings.mjs && node scripts/seed-listings.mjs && node scripts/seed-listing-images.mjs"
   },
   "dependencies": {
     "next": "16.3.6",
+    "pdf-parse": "2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24.19.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

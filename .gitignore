@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 本机密钥和登录凭证
+/.env.local
+/cookies*.txt
+
+# 本机数据库及 SQLite 附属文件
+/data/*.db*
+
+# 提交环境变量示例
+!.env.example
+
+/cookies*.txt
+/data/*.db*
+!.env.example
+
+/.init-check/
