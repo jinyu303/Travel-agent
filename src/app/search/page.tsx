@@ -31,27 +31,18 @@ export default async function SearchPage({
 
   let error = "";
 
-  if (
-    guests !== undefined &&
-    (!Number.isSafeInteger(guests) || guests < 1)
-  ) {
+  if (guests !== undefined && (!Number.isSafeInteger(guests) || guests < 1)) {
     error = "人数必须是正整数";
   } else if (
     maxPrice !== undefined &&
     (!Number.isSafeInteger(maxPrice) || maxPrice < 0)
   ) {
     error = "每晚预算必须是非负整数";
-  } else if (
-    propertyType &&
-    !["公寓", "民宿", "别墅"].includes(propertyType)
-  ) {
+  } else if (propertyType && !["公寓", "民宿", "别墅"].includes(propertyType)) {
     error = "房源类型不合法";
   } else if (
     (checkIn || checkOut) &&
-    (
-      getStayNights(checkIn, checkOut) === null ||
-      checkIn < today
-    )
+    (getStayNights(checkIn, checkOut) === null || checkIn < today)
   ) {
     error = "请填写合法且不早于今天的入住、退房日期";
   }
@@ -67,118 +58,128 @@ export default async function SearchPage({
       });
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-3xl font-bold">搜索住宿</h1>
+    <main className="travel-page">
+      <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
+        <p className="mb-3 text-sm font-semibold text-rose-500">探索住宿</p>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          找到适合你的住宿
+        </h1>
+        <p className="mt-3 text-gray-600">
+          按目的地、日期和预算，挑选下一段旅程的落脚点。
+        </p>
 
-      <form
-        action="/search"
-        method="get"
-        className="mt-6 grid gap-4 rounded-2xl border p-5 sm:grid-cols-2 lg:grid-cols-3"
-      >
-        <label>
-          <span className="text-sm">目的地</span>
-          <input
-            name="location"
-            defaultValue={location}
-            placeholder="全部地点"
-            className="mt-1 w-full rounded-lg border p-3"
-          />
-        </label>
-
-        <label>
-          <span className="text-sm">入住日期</span>
-          <input
-            type="date"
-            name="checkIn"
-            defaultValue={checkIn}
-            min={today}
-            className="mt-1 w-full rounded-lg border p-3"
-          />
-        </label>
-
-        <label>
-          <span className="text-sm">退房日期</span>
-          <input
-            type="date"
-            name="checkOut"
-            defaultValue={checkOut}
-            min={today}
-            className="mt-1 w-full rounded-lg border p-3"
-          />
-        </label>
-
-        <label>
-          <span className="text-sm">入住人数</span>
-          <input
-            type="number"
-            name="guests"
-            min={1}
-            defaultValue={rawGuests}
-            placeholder="不限"
-            className="mt-1 w-full rounded-lg border p-3"
-          />
-        </label>
-
-        <label>
-          <span className="text-sm">每晚最高预算（元）</span>
-          <input
-            type="number"
-            name="maxPrice"
-            min={0}
-            defaultValue={rawMaxPrice}
-            placeholder="不限"
-            className="mt-1 w-full rounded-lg border p-3"
-          />
-        </label>
-
-        <label>
-          <span className="text-sm">房源类型</span>
-          <select
-            name="propertyType"
-            defaultValue={propertyType}
-            className="mt-1 w-full rounded-lg border p-3"
-          >
-            <option value="">全部类型</option>
-            <option value="公寓">公寓</option>
-            <option value="民宿">民宿</option>
-            <option value="别墅">别墅</option>
-          </select>
-        </label>
-
-        <button
-          type="submit"
-          className="rounded-lg bg-rose-500 p-3 font-semibold text-white"
+        <form
+          action="/search"
+          method="get"
+          className="mt-8 grid gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-lg sm:grid-cols-2 lg:grid-cols-3"
         >
-          搜索
-        </button>
+          <label>
+            <span className="text-sm text-gray-600">目的地</span>
+            <input
+              name="location"
+              defaultValue={location}
+              placeholder="全部地点"
+              className="mt-1 w-full rounded-lg border p-3"
+            />
+          </label>
 
-        <a href="/search" className="self-center text-rose-500">
-          清空条件
-        </a>
-      </form>
+          <label>
+            <span className="text-sm text-gray-600">入住日期</span>
+            <input
+              type="date"
+              name="checkIn"
+              defaultValue={checkIn}
+              min={today}
+              className="mt-1 w-full rounded-lg border p-3"
+            />
+          </label>
 
-      {error ? (
-        <p role="alert" className="mt-6 text-red-600">{error}</p>
-      ) : (
-        <>
-          <p className="mt-6 text-gray-600">
-            找到 {listings.length} 套房源
+          <label>
+            <span className="text-sm text-gray-600">退房日期</span>
+            <input
+              type="date"
+              name="checkOut"
+              defaultValue={checkOut}
+              min={today}
+              className="mt-1 w-full rounded-lg border p-3"
+            />
+          </label>
+
+          <label>
+            <span className="text-sm text-gray-600">入住人数</span>
+            <input
+              type="number"
+              name="guests"
+              min={1}
+              defaultValue={rawGuests}
+              placeholder="不限"
+              className="mt-1 w-full rounded-lg border p-3"
+            />
+          </label>
+
+          <label>
+            <span className="text-sm text-gray-600">每晚最高预算（元）</span>
+            <input
+              type="number"
+              name="maxPrice"
+              min={0}
+              defaultValue={rawMaxPrice}
+              placeholder="不限"
+              className="mt-1 w-full rounded-lg border p-3"
+            />
+          </label>
+
+          <label>
+            <span className="text-sm text-gray-600">房源类型</span>
+            <select
+              name="propertyType"
+              defaultValue={propertyType}
+              className="mt-1 w-full rounded-lg border p-3"
+            >
+              <option value="">全部类型</option>
+              <option value="公寓">公寓</option>
+              <option value="民宿">民宿</option>
+              <option value="别墅">别墅</option>
+            </select>
+          </label>
+
+          <button
+            type="submit"
+            className="rounded-lg bg-rose-500 p-3 font-semibold text-white transition-colors hover:bg-rose-600"
+          >
+            搜索
+          </button>
+
+          <a href="/search" className="self-center text-rose-500">
+            清空条件
+          </a>
+        </form>
+
+        {error ? (
+          <p role="alert" className="mt-6 text-red-600">
+            {error}
           </p>
-          <p className="mt-2 text-sm text-gray-500">
-            房源、图片、评分及评论数均为演示资料。
-          </p>
+        ) : (
+          <>
+            <p className="mt-6 text-gray-600">找到 {listings.length} 套房源</p>
+            <p className="mt-2 text-sm text-gray-500">
+              房源、图片、评分及评论数均为演示资料。
+            </p>
 
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {listings.map((listing) => (
-              <ListingCard key={String(listing.id)} listing={listing} />
-            ))}
-          </div>
+            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {listings.map((listing) => (
+                <ListingCard key={String(listing.id)} listing={listing} />
+              ))}
+            </div>
 
-          {listings.length === 0 && (
-            <p className="mt-6">没有符合条件的房源，请调整条件。</p>
-          )}
-        </>
-      )}
+            {listings.length === 0 && (
+              <p className="mt-6 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center text-gray-600">
+                没有符合条件的房源，请调整条件。
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </main>
   );
 }

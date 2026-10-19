@@ -1,17 +1,20 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { parseStringArray } from "@/lib/listing-json";
 
 export default function ListingCard({
   listing,
+  footer,
 }: {
   listing: Record<string, unknown>;
+  footer?: ReactNode;
 }) {
   const images = parseStringArray(listing.images);
   const reviewCount = Number(listing.review_count);
   const name = String(listing.name);
 
   return (
-    <article className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+    <article className="travel-hover-card overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-900 shadow-sm">
       <a href={`/listings/${String(listing.id)}`} className="block">
         {images.length > 0 ? (
           <Image
@@ -53,6 +56,7 @@ export default function ListingCard({
           <p className="text-sm text-rose-500">查看详情与收藏</p>
         </div>
       </a>
+      {footer && <div className="border-t border-gray-100 p-5">{footer}</div>}
     </article>
   );
 }

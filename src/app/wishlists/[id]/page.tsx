@@ -1,8 +1,10 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getUserBySessionToken } from "@/lib/sessions";
 import { getWishlistWithListings } from "@/lib/wishlists";
 import ApiForm from "@/components/ApiForm";
+import ListingCard from "@/components/ListingCard";
 
 export default async function WishlistPage({
   params,
@@ -22,17 +24,23 @@ export default async function WishlistPage({
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-3xl font-bold">请先登录</h1>
-        <a href="/login" className="mt-6 block text-rose-500">
-          去登录
-        </a>
-      </main> 
+      <main className="travel-page">
+        <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
+          <p className="mb-3 text-sm font-semibold text-rose-500">
+            我的收藏住宿
+          </p>
+          <h1 className="break-words text-3xl font-bold tracking-tight sm:text-4xl">
+            请先登录
+          </h1>
+          <a href="/login" className="mt-6 block text-rose-500">
+            去登录
+          </a>
+        </div>
+      </main>
     );
   }
 
-  const result = getWishlistWithListings(user.id,wishlistId);
-
+  const result = getWishlistWithListings(user.id, wishlistId);
 
   if (!result) {
     notFound();
@@ -41,58 +49,55 @@ export default async function WishlistPage({
   const { wishlist, listings } = result;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-3xl font-bold">
-        {String(wishlist.name)}
-      </h1>
+    <main className="travel-page">
+      <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
+        <p className="mb-3 text-sm font-semibold text-rose-500">我的收藏住宿</p>
+        <h1 className="break-words text-3xl font-bold tracking-tight sm:text-4xl">
+          {String(wishlist.name)}
+        </h1>
 
-      <a href="/wishlists" className="mt-4 block text-rose-500">
-        返回心愿单列表
-      </a>
+        <Link href="/wishlists" className="mt-4 block text-rose-500">
+          返回心愿单列表
+        </Link>
 
-      <div className="mt-8 grid gap-4">
-        {listings.map((listing) => (
-          <article
-            key={String(listing.id)}
-            className="rounded-xl border p-5"
-          >
-            <h2 className="text-xl font-semibold">
-              {String(listing.name)}
-            </h2>
-            <p>{String(listing.location)}</p>
-            <p>每晚 ¥{String(listing.price_per_night)}</p>
-            <a
-              href={`/listings/${listing.id}`}
-              className="mt-3 inline-block text-rose-500"
-            >
-              查看房源
-            </a>
+        <div className="mt-8 grid items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {listings.map((listing) => (
+            <ListingCard
+              key={String(listing.id)}
+              listing={listing}
+              footer={
+                <ApiForm
+                  action="/api/wishlist-items/remove"
+                  successHref={`/wishlists/${String(wishlist.id)}`}
+                >
+                  <input
+                    type="hidden"
+                    name="wishlistId"
+                    value={String(wishlist.id)}
+                  />
+                  <input
+                    type="hidden"
+                    name="listingId"
+                    value={String(listing.id)}
+                  />
+                  <button
+                    type="submit"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-rose-500 transition-colors hover:border-rose-300 hover:bg-rose-50"
+                  >
+                    移除收藏
+                  </button>
+                </ApiForm>
+              }
+            />
+          ))}
+        </div>
 
-            {/* 提交到移除收藏 API */}
-          <ApiForm 
-          action = "/api/wishlist-items/remove"
-          successHref ={`/wishlists/${String(wishlist.id)}`}
-          className="mt-4">
-
-            <input type="hidden" name="wishlistId" value={String(wishlist.id)} />
-
-            <input type="hidden" name="listingId" value={String(listing.id)} />
-
-            <button
-              type="submit"
-              className="rounded-lg border px-4 py-2 text-rose-500"
-            >
-              移除收藏
-            </button>
-          </ApiForm>
-
-          </article>
-        ))}
+        {listings.length === 0 && (
+          <p className="mt-8 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-10 text-center text-gray-600">
+            这个心愿单还没有收藏房源。
+          </p>
+        )}
       </div>
-
-      {listings.length === 0 && (
-        <p className="mt-8">这个心愿单还没有收藏房源。</p>
-      )}
     </main>
   );
 }

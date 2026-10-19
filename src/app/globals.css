@@ -24,3 +24,43 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Match the home page's light canvas, including native form controls. */
+.travel-page {
+  flex: 1;
+  width: 100%;
+  min-height: 100vh;
+  background: #fff;
+  color: #111827;
+  color-scheme: light;
+}
+
+.travel-hover-card {
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .travel-hover-card:hover {
+    transform: translateY(-4px);
+    border-color: #fda4af;
+    box-shadow: 0 12px 28px -12px rgb(17 24 39 / 22%);
+  }
+}
+
+.travel-hover-card:focus-within {
+  border-color: #fb7185;
+  box-shadow: 0 0 0 3px rgb(251 113 133 / 15%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .travel-hover-card {
+    transition: none;
+  }
+
+  .travel-hover-card:hover {
+    transform: none;
+  }
+}
